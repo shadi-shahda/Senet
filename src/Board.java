@@ -2,11 +2,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Board {
+    private static final Board instance = new Board();
     Map<Integer, Square> squares;
 
-    public Board() {
+    private Board() {
         this.squares = new HashMap<>();
         initBoard();
+    }
+
+    public static Board getInstance() {
+        return instance;
     }
 
     private void initBoard() {
@@ -35,20 +40,27 @@ public class Board {
     }
 
     public boolean isFinal() {
-        boolean containsBlack = false;
-        boolean containsWhite = false;
+        boolean noBlack = true;
+        boolean noWhite = true;
         for (Map.Entry<Integer, Square> entry : this.squares.entrySet()) {
             if (entry.getValue().getPlayer() != null) {
                 if (entry.getValue().getPlayer() == Player.BLACK) {
-                    containsBlack = true;
+                    noBlack = false;
                 }
                 if (entry.getValue().getPlayer() == Player.WHITE) {
-                    containsWhite = true;
+                    noWhite = false;
                 }
-                if(containsBlack && containsWhite) break;
+                if (noBlack || noWhite) break;
             }
         }
-        return  (containsBlack && containsWhite);
+        if (noBlack || noWhite) {
+            if (noBlack) {
+                System.out.println("Black has won!");
+            } else {
+                System.out.println("White has won!");
+            }
+        }
+        return (noBlack || noWhite);
     }
 
     public void printBoard() {
