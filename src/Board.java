@@ -34,6 +34,23 @@ public class Board {
         }
     }
 
+    public boolean isFinal() {
+        boolean containsBlack = false;
+        boolean containsWhite = false;
+        for (Map.Entry<Integer, Square> entry : this.squares.entrySet()) {
+            if (entry.getValue().getPlayer() != null) {
+                if (entry.getValue().getPlayer() == Player.BLACK) {
+                    containsBlack = true;
+                }
+                if (entry.getValue().getPlayer() == Player.WHITE) {
+                    containsWhite = true;
+                }
+                if(containsBlack && containsWhite) break;
+            }
+        }
+        return  (containsBlack && containsWhite);
+    }
+
     public void printBoard() {
         for (int i = 1; i <= 10; i++) {
             printSquare(i);
