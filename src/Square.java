@@ -1,7 +1,7 @@
 public class Square {
-    int index;
-    SquareType squareType;
-    Player player;
+    private int index;
+    private SquareType squareType;
+    private Player player;
 
     public Square(int index, SquareType squareType) {
         this.index = index;
