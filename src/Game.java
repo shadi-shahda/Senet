@@ -23,7 +23,8 @@ public class Game {
         // todo apply action
     }
 
-    private int getRandomNumber() {
+    private int getRandomNumber()
+    {
         return (int) (Math.random() * 6);
     }
 }
