@@ -101,7 +101,7 @@ public class Game {
 
     public Board whitePlay() {
         int roll = this.getRandomNumber();
-        System.out.println("You can move " + roll + " steps");
+        System.out.println("White You can move " + roll + " steps");
         Board child = chooseAndPlay(this.board.deepCopy(), roll, Player.WHITE);
         System.out.println("-----------------------------------------");
         child.printBoard(child.squares);
