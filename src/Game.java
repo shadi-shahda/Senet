@@ -73,7 +73,6 @@ public class Game {
     public Board chooseAndApply(Board board, int roll, Player player) {
         List<Action> actions = this.getPossibleActions(board, roll, player);
         // TODO: get list of states from generateNextStates method (name it states)
-        List<Board> states = this.generateNextStates(board, roll, player);
         if (actions.isEmpty()) {
             System.out.println("No possible actions available.");
             return board;
@@ -83,8 +82,8 @@ public class Game {
         for (int i = 0; i < actions.size(); i++) {
             System.out.println(i + 1 + ") " + actions.get(i).toString());
             // TODO: board.printBoard(states.get(i));
-            //board.printBoard(board.squares);
-            states.get(i).printBoard(states.get(i).squares);
+            board.printBoard(board.squares);
+
         }
 
         int choice = -1;
@@ -151,7 +150,7 @@ public class Game {
 
     public Board whitePlay() {
         int roll = this.getRandomNumber();
-        System.out.println("You can move " + roll + " steps");
+        System.out.println("White You can move " + roll + " steps");
         Board child = chooseAndApply(this.board.deepCopy(), roll, Player.WHITE);
         System.out.println("-----------------------------------------");
         child.printBoard(child.squares);
@@ -160,9 +159,9 @@ public class Game {
 
     public Board blackPlay() {
         int roll = this.getRandomNumber();
-        System.out.println("You can move " + roll + " steps");
+        System.out.println("Black You can move " + roll + " steps");
         Board child = chooseAndApply(this.board.deepCopy(), roll, Player.BLACK);
-        System.out.println("-------------------------------------");
+        System.out.println("-----------------------------------------");
         child.printBoard(child.squares);
         return child;
         // todo expect-mini-max algorithm
@@ -172,4 +171,70 @@ public class Game {
     private int getRandomNumber() {
         return (int) (Math.random() * 5 + 1);
     }
+    private double evaluateBoard(Board board) {
+        // Simple heuristic: Black score minus White score
+        int blackProgress = blackScore;
+        int whiteProgress = whiteScore;
+
+        // Additional heuristic: sum of positions of pieces closer to the end
+        for (Square sq : board.squares.values()) {
+            if (sq.getPlayer() == Player.BLACK) blackProgress += sq.getIndex();
+            else if (sq.getPlayer() == Player.WHITE) whiteProgress += sq.getIndex();
+        }
+
+        return blackProgress - whiteProgress;
+    }
+
+    // Expectimax function
+    private double expectimax(Board board, int depth, boolean isMaxPlayer) {
+        if (depth == 0 || board.isFinal()) {
+            return evaluateBoard(board);
+        }
+
+        if (isMaxPlayer) { // Black
+            double bestValue = Double.NEGATIVE_INFINITY;
+            for (int roll = 1; roll <= 5; roll++) {
+                List<Action> actions = getPossibleActions(board, roll, Player.BLACK);
+                for (Action action : actions) {
+                    Board nextBoard = applyAction(board, action, Player.BLACK);
+                    double value = expectimax(nextBoard, depth - 1, false);
+                    bestValue = Math.max(bestValue, value);
+                }
+            }
+            return bestValue;
+        } else { //chance
+            double expectedValue = 0;
+            for (int roll = 1; roll <= 5; roll++) {
+                List<Action> actions = getPossibleActions(board, roll, Player.WHITE);
+                if (actions.isEmpty()) continue;
+                double rollProb = 1.0 / actions.size();
+                for (Action action : actions) {
+                    Board nextBoard = applyAction(board, action, Player.WHITE);
+                    expectedValue += rollProb * expectimax(nextBoard, depth - 1, true);
+                }
+            }
+            return expectedValue / 5.0;
+        }
+    }
+
+    // Choose best move
+    private Action chooseBestAction(Board board, int depth) {
+        double bestValue = Double.NEGATIVE_INFINITY;
+        Action bestAction = null;
+
+        for (int roll = 1; roll <= 5; roll++) {
+            List<Action> actions = getPossibleActions(board, roll, Player.BLACK);
+            for (Action action : actions) {
+                Board nextBoard = applyAction(board, action, Player.BLACK);
+                double value = expectimax(nextBoard, depth - 1, false);
+                if (value > bestValue) {
+                    bestValue = value;
+                    bestAction = action;
+                }
+            }
+        }
+
+        return bestAction;
+    }
+
 }
