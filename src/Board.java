@@ -50,20 +50,24 @@ public class Board {
     }
 
     public boolean isFinal() {
-        boolean stillBlack = false;
-        boolean stillWhite = false;
+        boolean noBlack = true;
+        boolean noWhite = true;
         for (Map.Entry<Integer, Square> entry : this.squares.entrySet()) {
             if (entry.getValue().getPlayer() != null) {
                 if (entry.getValue().getPlayer() == Player.BLACK) {
-                    stillBlack = true;
+                    noBlack = false;
                 }
                 if (entry.getValue().getPlayer() == Player.WHITE) {
-                    stillWhite = true;
+                    noWhite = false;
                 }
-                if (stillWhite && stillBlack) break;
             }
         }
-        return (stillWhite && stillBlack);
+        if (noBlack) {
+            System.out.println("Black has won");
+        } else if (noWhite) {
+            System.out.println("White has won");
+        }
+        return (noBlack || noWhite);
     }
 
     public Board deepCopy() {
