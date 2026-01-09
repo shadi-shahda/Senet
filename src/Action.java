@@ -32,4 +32,9 @@ public class Action {
     public void setExitBoard(boolean exitBoard) {
         this.exitBoard = exitBoard;
     }
+
+    @Override
+    public String toString() {
+        return String.format("from (" + this.firstPosition+ ") to (" + this.secondPosition+ ")");
+    }
 }
