@@ -2,19 +2,28 @@ import java.util.*;
 
 public class Game {
     Board board;
-    static int blackScore = 0;
-    static int whiteScore = 0;
-
+//    static int blackScore = 0;
+//    static int whiteScore = 0;
+    private static final Map<Integer, Double> STICKS = Map.of(
+            1, 4.0 / 16.0,
+            2, 6.0 / 16.0,
+            3, 4.0 / 16.0,
+            4, 1.0 / 16.0,
+            5, 1.0 / 16.0
+    );
     public void startGame() {
         this.board = new Board();
         this.board.initBoard();
         this.board.printBoard(this.board.squares);
 
         while (!this.board.isFinal()) {
-            Board child;
-            child = this.whitePlay();
-            this.blackPlay();
+
+            this.board = whitePlay();
+            if (this.board.isFinal()) break;
+
+            this.board = blackPlay();
         }
+
 
     }
 
@@ -22,12 +31,12 @@ public class Game {
         Board copiedBoard = board.deepCopy();
         if (action.isExitBoard()) {
             if (player == Player.BLACK) {
-                blackScore++;
+                copiedBoard.blackScore++;
             } else {
-                whiteScore++;
+                copiedBoard.whiteScore++;
             }
             copiedBoard.squares.get(action.getFirstPosition()).setPlayer(null);
-            System.out.println("Black: " + blackScore + "\t\t White: " + whiteScore);
+//            System.out.println("Black score: " + board.blackScore + "\t\t White score: " + board.whiteScore);
         } else {
             for (int i = 27; i < 30; i++) {
                 Player invalidPlayer = copiedBoard.squares.get(i).getPlayer();
@@ -80,9 +89,12 @@ public class Game {
 
         System.out.println("Possible actions:");
         for (int i = 0; i < actions.size(); i++) {
-            System.out.println(i + 1 + ") " + actions.get(i).toString());
-            // TODO: board.printBoard(states.get(i));
-            board.printBoard(board.squares);
+            Action action = actions.get(i);
+            Board preview = applyAction(board, action, player);
+
+            System.out.println((i + 1) + ") " + action);
+            preview.printBoard(preview.squares);
+            System.out.println("|---------------------------------------------------------------||");
 
         }
 
@@ -152,31 +164,68 @@ public class Game {
         int roll = this.getRandomNumber();
         System.out.println("White You can move " + roll + " steps");
         Board child = chooseAndApply(this.board.deepCopy(), roll, Player.WHITE);
-        System.out.println("-----------------------------------------");
+        System.out.println("Black score: " + child.blackScore + "\t\t White score: " + child.whiteScore);
+        System.out.println("|---------------------------------------------------------------||");
         child.printBoard(child.squares);
         return child;
     }
 
     public Board blackPlay() {
         int roll = this.getRandomNumber();
-        System.out.println("Black You can move " + roll + " steps");
-        Board child = chooseAndApply(this.board.deepCopy(), roll, Player.BLACK);
-        System.out.println("-----------------------------------------");
+        System.out.println("Black (Expectimax) You can move " + roll + " steps");
+
+        int depth = 3;
+
+        List<Action> actions = getPossibleActions(this.board, roll, Player.BLACK);
+
+        if (actions.isEmpty()) {
+            System.out.println("Black has no possible moves.");
+            return this.board;
+        }
+
+        System.out.println("Black possible actions (Expectimax evaluation):");
+
+        double bestValue = Double.NEGATIVE_INFINITY;
+        Action bestAction = null;
+
+        for (int i = 0; i < actions.size(); i++) {
+            Action action = actions.get(i);
+            Board next = applyAction(this.board.deepCopy(), action, Player.BLACK);
+
+            double value = chanceNode(next, depth - 1, Player.WHITE);
+
+            System.out.printf(
+                    "%d) %s  => Expected Value = %.2f%n",
+                    i + 1,
+                    action.toString(),
+                    value
+            );
+
+            if (value > bestValue) {
+                bestValue = value;
+                bestAction = action;
+            }
+        }
+
+        System.out.println("Black (Expectimax) chooses: " + bestAction.toString());
+
+        Board child = applyAction(this.board, bestAction, Player.BLACK);
+        System.out.println("Black score: " + child.blackScore + "\t\t White score: " + child.whiteScore);
+        System.out.println("|---------------------------------------------------------------||");
         child.printBoard(child.squares);
+
         return child;
-        // todo expect-mini-max algorithm
-        // todo apply action
     }
 
     private int getRandomNumber() {
         return (int) (Math.random() * 5 + 1);
     }
     private double evaluateBoard(Board board) {
-        // Simple heuristic: Black score minus White score
-        int blackProgress = blackScore;
-        int whiteProgress = whiteScore;
+        //  Black score minus White score
+        int blackProgress = board.blackScore;
+        int whiteProgress = board.whiteScore;
 
-        // Additional heuristic: sum of positions of pieces closer to the end
+        // sum of positions of pieces closer to the end
         for (Square sq : board.squares.values()) {
             if (sq.getPlayer() == Player.BLACK) blackProgress += sq.getIndex();
             else if (sq.getPlayer() == Player.WHITE) whiteProgress += sq.getIndex();
@@ -185,56 +234,68 @@ public class Game {
         return blackProgress - whiteProgress;
     }
 
-    // Expectimax function
-    private double expectimax(Board board, int depth, boolean isMaxPlayer) {
+
+    private double chanceNode(Board board, int depth, Player player) {
         if (depth == 0 || board.isFinal()) {
             return evaluateBoard(board);
         }
 
-        if (isMaxPlayer) { // Black
-            double bestValue = Double.NEGATIVE_INFINITY;
-            for (int roll = 1; roll <= 5; roll++) {
-                List<Action> actions = getPossibleActions(board, roll, Player.BLACK);
-                for (Action action : actions) {
-                    Board nextBoard = applyAction(board, action, Player.BLACK);
-                    double value = expectimax(nextBoard, depth - 1, false);
-                    bestValue = Math.max(bestValue, value);
-                }
-            }
-            return bestValue;
-        } else { //chance
-            double expectedValue = 0;
-            for (int roll = 1; roll <= 5; roll++) {
-                List<Action> actions = getPossibleActions(board, roll, Player.WHITE);
-                if (actions.isEmpty()) continue;
-                double rollProb = 1.0 / actions.size();
-                for (Action action : actions) {
-                    Board nextBoard = applyAction(board, action, Player.WHITE);
-                    expectedValue += rollProb * expectimax(nextBoard, depth - 1, true);
-                }
-            }
-            return expectedValue / 5.0;
+        double expected = 0;
+
+        for (int roll = 1; roll <= 5; roll++) {
+            double p = STICKS.get(roll);
+
+            expected += p * decisionNode(board, depth, player, roll);
         }
+
+        return expected;
     }
 
-    // Choose best move
-    private Action chooseBestAction(Board board, int depth) {
+    private double decisionNode(Board board, int depth, Player player, int roll) {
+        List<Action> actions = getPossibleActions(board, roll, player);
+
+        if (actions.isEmpty()) {
+            return evaluateBoard(board);
+        }
+
+        double best;
+
+        if (player == Player.BLACK) { // MAX
+            best = Double.NEGATIVE_INFINITY;
+            for (Action a : actions) {
+                Board next = applyAction(board, a, player);
+                best = Math.max(best,
+                        chanceNode(next, depth - 1, Player.WHITE));
+            }
+        } else { // White (MIN or assumed optimal)
+            best = Double.POSITIVE_INFINITY;
+            for (Action a : actions) {
+                Board next = applyAction(board, a, player);
+                best = Math.min(best,
+                        chanceNode(next, depth - 1, Player.BLACK));
+            }
+        }
+
+        return best;
+    }
+    private Action chooseBestAction(Board board, int depth, int roll) {
         double bestValue = Double.NEGATIVE_INFINITY;
         Action bestAction = null;
 
-        for (int roll = 1; roll <= 5; roll++) {
-            List<Action> actions = getPossibleActions(board, roll, Player.BLACK);
-            for (Action action : actions) {
-                Board nextBoard = applyAction(board, action, Player.BLACK);
-                double value = expectimax(nextBoard, depth - 1, false);
-                if (value > bestValue) {
-                    bestValue = value;
-                    bestAction = action;
-                }
+        List<Action> actions = getPossibleActions(board, roll, Player.BLACK);
+
+        for (Action action : actions) {
+            Board next = applyAction(board, action, Player.BLACK);
+            double value = chanceNode(next, depth - 1, Player.WHITE);
+
+            if (value > bestValue) {
+                bestValue = value;
+                bestAction = action;
             }
         }
 
         return bestAction;
     }
+
 
 }

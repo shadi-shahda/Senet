@@ -8,6 +8,11 @@ public class Square {
         this.squareType = squareType;
         this.player = null;
     }
+    public Square deepCopy() {
+        Square s = new Square(this.index, this.squareType);
+        s.setPlayer(this.player);
+        return s;
+    }
 
     public int getIndex() {
         return index;
