@@ -61,6 +61,7 @@ public class Board {
                     noWhite = false;
                 }
             }
+            if (!noWhite && !noBlack) break;
         }
         if (noBlack) {
             System.out.println("Black has won");

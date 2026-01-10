@@ -29,16 +29,14 @@ public class Game {
             copiedBoard.squares.get(action.getFirstPosition()).setPlayer(null);
             System.out.println("Black: " + blackScore + "\t\t White: " + whiteScore);
         } else {
-            for (int i = 27; i < 30; i++) {
-                Player invalidPlayer = copiedBoard.squares.get(i).getPlayer();
+            int invalidPlayerIndex = -1;
+
+            Player invalidPlayer = Player.BLACK;
+            for (int i = 28; i <= 30; i++) {
+                invalidPlayer = copiedBoard.squares.get(i).getPlayer();
                 if (invalidPlayer != null && invalidPlayer == player) {
-                    for (int j = 15; j >= 1; j--) {
-                        if (copiedBoard.squares.get(j).getPlayer() == null) {
-                            copiedBoard.squares.get(j).setPlayer(invalidPlayer);
-                            copiedBoard.squares.get(i).setPlayer(null);
-                            break;
-                        }
-                    }
+                    invalidPlayerIndex = i;
+                    break;
                 }
             }
             if (copiedBoard.squares.get(action.getSecondPosition()).getPlayer() == player.other()) {
@@ -48,12 +46,14 @@ public class Game {
                 copiedBoard.squares.get(action.getFirstPosition()).setPlayer(null);
                 copiedBoard.squares.get(action.getSecondPosition()).setPlayer(player);
             }
-            // moving to see after applying the move
-            if (action.getSecondPosition() == 27) {
+
+            // moving to see after applying the move || I put it here, so it does the move after main move applied
+            if (action.getSecondPosition() == 27 || invalidPlayerIndex != -1) {
+                invalidPlayerIndex = invalidPlayerIndex != -1 ? invalidPlayerIndex : 27;
                 for (int j = 15; j >= 1; j--) {
                     if (copiedBoard.squares.get(j).getPlayer() == null) {
                         copiedBoard.squares.get(j).setPlayer(player);
-                        copiedBoard.squares.get(27).setPlayer(null);
+                        copiedBoard.squares.get(invalidPlayerIndex).setPlayer(null);
                         break;
                     }
                 }
