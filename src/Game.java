@@ -122,7 +122,7 @@ public class Game {
                             actions.add(action);
                         }
                     }
-                    continue;
+                    break;
                 }
                 if (board.squares.get(square.getKey() + roll).getPlayer() == player) continue;
                 // ignore the cells between last movable cell and BARRIER BOX
