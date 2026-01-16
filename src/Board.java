@@ -3,7 +3,8 @@ import java.util.Map;
 
 public class Board {
     Map<Integer, Square> squares;
-
+    int blackScore;
+    int whiteScore;
     public Board() {
         this.squares = new HashMap<>();
     }
@@ -72,8 +73,19 @@ public class Board {
     }
 
     public Board deepCopy() {
-        return new Board(this.squares);
+        Board copy = new Board();
+        copy.squares = new HashMap<>();
+
+        for (Map.Entry<Integer, Square> entry : this.squares.entrySet()) {
+            copy.squares.put(entry.getKey(), entry.getValue().deepCopy());
+        }
+
+        copy.blackScore = this.blackScore;
+        copy.whiteScore = this.whiteScore;
+
+        return copy;
     }
+
 
     public void printBoard(Map<Integer, Square> squares) {
         for (int i = 1; i <= 10; i++) {
