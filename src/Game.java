@@ -23,8 +23,6 @@ public class Game {
 
             this.board = blackPlay();
         }
-
-
     }
 
     private Board applyAction(Board board, Action action, Player player) {
@@ -81,7 +79,6 @@ public class Game {
     }
     public Board chooseAndApply(Board board, int roll, Player player) {
         List<Action> actions = this.getPossibleActions(board, roll, player);
-        // TODO: get list of states from generateNextStates method (name it states)
         if (actions.isEmpty()) {
             System.out.println("No possible actions available.");
             return board;
@@ -161,7 +158,7 @@ public class Game {
     }
 
     public Board whitePlay() {
-        int roll = this.getRandomNumber();
+        int roll = rollSticks();
         System.out.println("White You can move " + roll + " steps");
         Board child = chooseAndApply(this.board.deepCopy(), roll, Player.WHITE);
         System.out.println("Black score: " + child.blackScore + "\t\t White score: " + child.whiteScore);
@@ -170,7 +167,7 @@ public class Game {
         return child;
     }
     public Board blackPlay() {
-        int roll = this.getRandomNumber();
+        int roll = rollSticks();
         System.out.println("Black (Expectimax) You can move " + roll + " steps");
 
         int depth = 3;
@@ -205,9 +202,19 @@ public class Game {
     }
 
 
-    private int getRandomNumber() {
-        return (int) (Math.random() * 5 + 1);
+    private int rollSticks() {
+        double r = Math.random();
+        double cumulative = 0.0;
+
+        for (int roll = 1; roll <= 5; roll++) {
+            cumulative += STICKS.get(roll);
+            if (r <= cumulative) {
+                return roll;
+            }
+        }
+        return 1;
     }
+
     private double evaluateBoard(Board board) {
         //  Black score minus White score
         int blackProgress = board.blackScore;
@@ -283,9 +290,6 @@ public class Game {
                 bestAction = action;
             }
         }
-
         return bestAction;
     }
-
-
 }
